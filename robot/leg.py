@@ -42,16 +42,14 @@ class Leg:
     # a minimum it takes in a copy of itself (python... weird). The constructor
     # is one place we can define and initialize class variables
 
-    def __init__(self, simulate = True):
+    def __init__(self, simulate = False):
         """
         This is the constructor for the leg class. Whenever you make a new leg
         this code will be called. We can optionally make a leg that will simulate
         the computations without needing to be connected to the ODrive
         """
 
-        self.simulate = True #simulate
-
-            
+        self.simulate = simulate #simulate            
 
         # make the option to code without having the odrive connected
         if self.simulate == False:
@@ -121,7 +119,7 @@ class Leg:
         if self.simulate == True:
             return
         else: # Your code here
-            self.home = (self.m0.encoder.pll_pos/encoder2angle*(2*pi) +pi/2,self.m1.encoder.pll_pos/encoder2angle*(2*pi) +pi/2) #angle
+            self.home = (self.m0.encoder.pll_pos/encoder2angle*(2*pi)+pi/2, self.m1.encoder.pll_pos/encoder2angle*(2*pi)+pi/2) #angle
 
 
     def set_joint_pos(self, theta0, theta1, vel0=0, vel1=0, curr0=0, curr1=0):
@@ -160,14 +158,11 @@ class Leg:
         # if simulating exit function
         if self.simulate == True:
             (theta_0, theta_1) = self.inverse_kinematics(x,y)
-            self.set_joint_pos(theta_0,theta_1) 
-            return (theta_0,theta_1)
+            return (theta_0, theta_1)
         else:
             (theta_0, theta_1) = self.inverse_kinematics(x,y)
             self.set_joint_pos(theta_0,theta_1) 
-        #
-        # Your code here
-        #
+       
 
     def move_trajectory(self, tt, xx, yy):
         """
@@ -184,33 +179,26 @@ class Leg:
             tra_alpha0, tra_alpha1 = [], []
             
             for i in range(tt):
-				  # Computer theta's for trajectory and store them
+				# Computer theta's for trajectory and store them
                 (theta_0, theta_1) = self.set_foot_pos(xx[i],yy[i])
-                #plt.clf()
-                #print(theta_0,theta_1)
+
                 tra_theta0.append(theta_0)
                 tra_theta1.append(theta_1)
 				
-				  # Computer alpha's for trajectory and store them
+				# Computer alpha's for trajectory and store them
                 (alpha_0, alpha_1) = self.compute_internal_angles(theta_0, theta_1)
                 tra_alpha0.append(alpha_0)
-                tra_alpha1.append(alpha_1)
-				
-                # self.draw_leg(ax)                
-                # plt.pause(0.1)
-                # plt.show()
-                
+                tra_alpha1.append(alpha_1)     
+            
+            np.savetxt('thetas', (tra_theta0, tra_theta1))
+
+            return (tra_theta0, tra_theta1, tra_alpha0, tra_alpha1)    
                 
         else:
             for i in range(tt):
                 self.set_foot_pos(xx[i],yy[i])
-                print(theta_0,theta_1)
                           
-        #
-        # Your code here
-        #
-        return (tra_theta0, tra_theta1, tra_alpha0, tra_alpha1)
-
+      
     ###
     ### Leg geometry functions
     ###
@@ -282,47 +270,47 @@ class Leg:
     ###
     ### Visualization functions
     ###
-    def draw_leg(self, ax=False):
-        """
-        This function takes in the four angles of the leg and draws
-        the configuration
-        """        
-
-        theta1, theta2 = self.joint_0_pos, self.joint_1_pos
-        link1, link2, width = l1, l2, l_base
-
-        (alpha1, alpha2) = self.compute_internal_angles(theta1,theta2)
-
-        def pol2cart(rho, phi):
-            x = rho * np.cos(phi)
-            y = rho * np.sin(phi)
-            return (x, y)
-
-        if ax == False:
-            
-            ax = plt.gca()
-            ax.cla()
-
-
-        ax.plot(-width / 2, 0, 'ok')
-        ax.plot(width / 2, 0, 'ok')
-
-        ax.plot([-width / 2, 0], [0, 0], 'k')
-        ax.plot([width / 2, 0], [0, 0], 'k')
-
-        ax.plot(-width / 2 + np.array([0, link1 * cos(theta1)]), [0, link1 * sin(theta1)], 'k')
-        ax.plot(width / 2 + np.array([0, link1 * cos(theta2)]), [0, link1 * sin(theta2)], 'k')
-
-        ax.plot(-width / 2 + link1 * cos(theta1) + np.array([0, link2 * cos(alpha1)]), \
-                link1 * sin(theta1) + np.array([0, link2 * sin(alpha1)]), 'k');
-        ax.plot(width / 2 + link1 * cos(theta2) + np.array([0, link2 * cos(alpha2)]), \
-                np.array(link1 * sin(theta2) + np.array([0, link2 * sin(alpha2)])), 'k');
-
-        ax.plot(width / 2 + link1 * cos(theta2) + link2 * cos(alpha2), \
-                np.array(link1 * sin(theta2) + link2 * sin(alpha2)), 'ro');
-
-        ax.axis([-(l1+l2), (l1+l2), -l1, (l1+l2)])
-        ax.invert_yaxis()
-
-        #plt.draw()
+#    def draw_leg(self, ax=False):
+#        """
+#        This function takes in the four angles of the leg and draws
+#        the configuration
+#        """        
+#
+#        theta1, theta2 = self.joint_0_pos, self.joint_1_pos
+#        (alpha1, alpha2) = self.compute_internal_angles(theta1, theta2)
+#        
+#        link1, link2, width = l1, l2, l_base        
+#
+#        def pol2cart(rho, phi):
+#            x = rho * np.cos(phi)
+#            y = rho * np.sin(phi)
+#            return (x, y)
+#
+#        if ax == False:
+#            
+#            ax = plt.gca()
+#            ax.cla()
+#
+#
+#        ax.plot(-width / 2, 0, 'ok')
+#        ax.plot(width / 2, 0, 'ok')
+#
+#        ax.plot([-width / 2, 0], [0, 0], 'k')
+#        ax.plot([width / 2, 0], [0, 0], 'k')
+#
+#        ax.plot(-width / 2 + np.array([0, link1 * cos(theta1)]), [0, link1 * sin(theta1)], 'k')
+#        ax.plot(width / 2 + np.array([0, link1 * cos(theta2)]), [0, link1 * sin(theta2)], 'k')
+#
+#        ax.plot(-width / 2 + link1 * cos(theta1) + np.array([0, link2 * cos(alpha1)]), \
+#                link1 * sin(theta1) + np.array([0, link2 * sin(alpha1)]), 'k');
+#        ax.plot(width / 2 + link1 * cos(theta2) + np.array([0, link2 * cos(alpha2)]), \
+#                np.array(link1 * sin(theta2) + np.array([0, link2 * sin(alpha2)])), 'k');
+#
+#        ax.plot(width / 2 + link1 * cos(theta2) + link2 * cos(alpha2), \
+#                np.array(link1 * sin(theta2) + link2 * sin(alpha2)), 'ro');
+#
+#        ax.axis([-(l1+l2), (l1+l2), -l1, (l1+l2)])
+#        ax.invert_yaxis()
+#
+#        #plt.draw()
         
